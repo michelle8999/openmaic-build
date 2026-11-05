@@ -2,6 +2,9 @@ name: build-openmaic
 
 on:
   workflow_dispatch:
+  
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -58,3 +61,11 @@ jobs:
           name: openmaic-v1.3.1-standalone
           path: openmaic-v1.3.1-standalone.tar.gz
           retention-days: 7
+          
+      - name: Publish to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-v1.3.1
+          name: OpenMAIC v1.3.1 standalone
+          files: openmaic-v1.3.1-standalone.tar.gz
+
