@@ -7,17 +7,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout OpenMAIC v1.3.1
+      - name: Checkout this repository (patch files)
+        uses: actions/checkout@v4
+
+      - name: Checkout OpenMAIC v1.3.1 into subdirectory
         uses: actions/checkout@v4
         with:
           repository: THU-MAIC/OpenMAIC
           ref: v1.3.1
+          path: openmaic-src
 
       - name: Apply gateway JWT auth patches
         run: |
-          mkdir -p lib/server/identity/host
-          cp gateway-jwt.ts lib/server/identity/host/gateway-jwt.ts
-          node patch-instrumentation.js .
+          mkdir -p openmaic-src/lib/server/identity/host
+          cp gateway-jwt.ts openmaic-src/lib/server/identity/host/gateway-jwt.ts
+          node patch-instrumentation.js openmaic-src
 
       - name: Setup Node 22
         uses: actions/setup-node@v4
@@ -28,22 +32,25 @@ jobs:
         run: npm install -g pnpm@10.28.0
 
       - name: Install dependencies
+        working-directory: openmaic-src
         run: pnpm install
         env:
           NEXT_TELEMETRY_DISABLED: 1
 
       - name: Build
+        working-directory: openmaic-src
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: 1
 
       - name: Package standalone release
+        working-directory: openmaic-src
         run: |
           mkdir -p release/.next
           cp -a .next/standalone/. release/
           cp -a .next/static release/.next/static
           cp -a public release/public
-          tar czf openmaic-v1.3.1-standalone.tar.gz -C release .
+          tar czf "$GITHUB_WORKSPACE/openmaic-v1.3.1-standalone.tar.gz" -C release .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
